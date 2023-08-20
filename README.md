@@ -20,3 +20,7 @@ Options:<br />
             Lower the number if HomeAssistant server is running on a low-end machine.<br />
 
 Example: python ha_bruteforce.py -s 192.168.1.1:8080 -u admin -P passwords.txt
+
+
+## custom_slowloris <br />
+Please edit the HOST and PORT variables to match with your HomeAssistant server before running the script.
