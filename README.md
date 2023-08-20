@@ -9,7 +9,7 @@ Options:<br />
 Example: python ha_dos.py -s 192.168.1.1:8080 -d 20 -m 1<br />
 <br />
 
-## ha_bruteforce<br />
+## ha_bruteforce.py<br />
 Options:<br />
         -s: Specify the server's address with port number.<br />
             If port is not provided, the port will be selected appropriately according to the protocol (i.e. HTTP vs HTTPS).<br />
