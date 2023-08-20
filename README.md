@@ -22,5 +22,8 @@ Options:<br />
 Example: python ha_bruteforce.py -s 192.168.1.1:8080 -u admin -P passwords.txt
 
 
-## custom_slowloris <br />
+## custom_slowloris.py <br />
 Please edit the HOST and PORT variables to match with your HomeAssistant server before running the script.
+
+## server_usage.py <br />
+Please run the script as is.
